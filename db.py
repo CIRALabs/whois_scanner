@@ -8,3 +8,6 @@ class Db:
 
   def __str__(self):
     return str(self.DB)
+  
+  def print_results(self):
+    print(self)

@@ -48,7 +48,7 @@ def main():
       whois_result = lookup(hostname)
       country = extract_registrant_country(whois_result)
       DB.record_country(hostname, country)
-    print(DB)
+    DB.print_results()
   except WhoisCrawlerException as whoisexception:
     log.exception(whoisexception)
     return whoisexception.code
