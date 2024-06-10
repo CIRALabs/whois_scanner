@@ -22,6 +22,7 @@ python3.10 main.py <pagenum> <pagesize>
 ```
 
 ## Docker
+<em>TODO: This is still in the works, as the input.json file has to be embedded into the docker container.</em>
 ```bash
 docker build -t whois-crawler:latest .
 docker run -it whois-crawler:latest <pagenum> <pagesize>
