@@ -4,6 +4,9 @@
     [
       {
         "hostname": "google.com"
+      },
+      {
+        "hostname": "eurail.com"
       }
     ]
 }
