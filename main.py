@@ -1,10 +1,11 @@
+from db import Db
 from error import WhoisCrawlerException, ErrorCodes
 import whois
 import json
 import logging
 
 INPUT_FILE = "input.json"
-DB = {}
+DB = Db()
 
 log = logging.getLogger()
 
@@ -37,10 +38,6 @@ def extract_hostname(domain):
   else:
     raise WhoisCrawlerException(ErrorCodes.BAD_INPUT_FILE)
 
-def record_country(domain, country):
-  if country not in DB:
-    DB[country] = []
-  DB[country].append(domain)
 
 def main():
   try:
@@ -50,7 +47,7 @@ def main():
       hostname = extract_hostname(domain)
       whois_result = lookup(hostname)
       country = extract_registrant_country(whois_result)
-      record_country(hostname, country)
+      DB.record_country(hostname, country)
     print(DB)
   except WhoisCrawlerException as whoisexception:
     log.exception(whoisexception)
