@@ -6,6 +6,9 @@
         "hostname": "google.com"
       },
       {
+        "hostname": "googledne.com"
+      },
+      {
         "hostname": "eurail.com"
       }
     ]
