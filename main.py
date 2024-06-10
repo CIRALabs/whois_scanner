@@ -3,11 +3,14 @@
 import json
 import logging
 import sys
+
+import jsonschema
 import whois
 
 from error import WhoisCrawlerException, ErrorCodes
 from db import Db
 
+SCHEMA_FILE = "input.schema.json"
 INPUT_FILE = "input.json"
 ENCODING = "UTF-8"
 DB = Db()
@@ -18,8 +21,14 @@ log = logging.getLogger()
 def read_input():
     '''Read from input file'''
     try:
-        with open(INPUT_FILE, encoding=ENCODING) as file:
-            return json.load(file)
+        with (open(INPUT_FILE, encoding=ENCODING) as json_file,
+              open(SCHEMA_FILE, encoding=ENCODING) as schema_file):
+            json_data = json.load(json_file)
+            schema = json.load(schema_file)
+            jsonschema.validate(instance=json_data, schema=schema) # Will raise exception if invalid
+            return json_data
+    except jsonschema.exceptions.ValidationError as ex:
+        raise WhoisCrawlerException(ErrorCodes.BAD_INPUT_FILE) from ex
     except Exception as ex:
         raise WhoisCrawlerException(ErrorCodes.FAILED_TO_READ_INPUT_FILE) from ex
 
@@ -44,19 +53,15 @@ def extract_registrant_country(whois_result):
 
 def extract_domains(input_data, pagenum, pagesize):
     '''Pull domain list out of the input file data'''
-    if "domains" in input_data:
-        domains = input_data["domains"]
-        if pagesize is None:
-            return domains
-        return domains[pagesize*pagenum:pagesize*(pagenum+1)]
-    raise WhoisCrawlerException(ErrorCodes.BAD_INPUT_FILE)
+    domains = input_data["domains"]
+    if pagesize is None:
+        return domains
+    return domains[pagesize*pagenum:pagesize*(pagenum+1)]
 
 
 def extract_hostname(domain):
     '''Pull hostname from input file data'''
-    if "hostname" in domain:
-        return domain["hostname"]
-    raise WhoisCrawlerException(ErrorCodes.BAD_INPUT_FILE)
+    return domain["hostname"]
 
 
 def main(pagenum, pagesize):
