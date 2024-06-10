@@ -42,6 +42,11 @@ docker build -t whois-crawler:latest .
 docker run -it whois-crawler:latest <pagenum> <pagesize>
 ```
 
+Or as a paged loop:
+```bash
+bash run_docker_paged.sh 100
+```
+
 ## Exit codes
 The program has been written to split return codes into three categories:
 * Negative value: The program failed and halted execution
