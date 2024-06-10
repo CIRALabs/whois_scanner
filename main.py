@@ -8,7 +8,7 @@ import sys
 import jsonschema
 import whois
 
-from error import WhoisCrawlerException, ErrorCodes
+from error import WhoisScannerException, ErrorCodes
 from db import Db
 
 SCHEMA_FILE = "input.schema.json"
@@ -29,7 +29,7 @@ def read_input():
             json_data = json.load(json_file)
             return json_data
     except IOError as ex:
-        raise WhoisCrawlerException(ErrorCodes.FAILED_TO_READ_INPUT_FILE) from ex
+        raise WhoisScannerException(ErrorCodes.FAILED_TO_READ_INPUT_FILE) from ex
 
 
 def parse_input(json_data):
@@ -40,7 +40,7 @@ def parse_input(json_data):
             jsonschema.validate(instance=json_data, schema=schema) # Will raise exception if invalid
             return json_data
     except jsonschema.exceptions.ValidationError as ex:
-        raise WhoisCrawlerException(ErrorCodes.BAD_INPUT_FILE) from ex
+        raise WhoisScannerException(ErrorCodes.BAD_INPUT_FILE) from ex
 
 
 def lookup(domain):
@@ -50,7 +50,7 @@ def lookup(domain):
         return resp
     except whois.parser.PywhoisError as ex:
         if str(ex).startswith("No match for"):
-            raise WhoisCrawlerException(ErrorCodes.HOSTNAME_DOES_NOT_EXIST) from ex
+            raise WhoisScannerException(ErrorCodes.HOSTNAME_DOES_NOT_EXIST) from ex
         raise ex
 
 
@@ -109,7 +109,7 @@ def main(pagenum, pagesize):
         data = parse_input(raw_json)
         domains = extract_domains(data, pagenum, pagesize)
         terms = extract_terms(data)
-    except WhoisCrawlerException as whoisexception:
+    except WhoisScannerException as whoisexception:
         log.exception(whoisexception)
         return whoisexception.code
     except BaseException as ex:  # pylint: disable=broad-except
@@ -135,7 +135,7 @@ def main(pagenum, pagesize):
                 log.debug("# Hostname %s was recorded for country %s.", hostname, country)
                 DB.record_country(hostname, country)
             index += 1
-        except WhoisCrawlerException as whoisexception:
+        except WhoisScannerException as whoisexception:
             log.debug("# Hostname %s was marked failed. %s", domain, str(whoisexception))
             DB.record_failed(domain, str(whoisexception))
         except whois.parser.PywhoisError as ex:

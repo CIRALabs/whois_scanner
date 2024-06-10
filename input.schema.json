@@ -1,7 +1,7 @@
 {
-  "$id": "https://example.com/whois-crawler/input.schema.json",
+  "$id": "https://example.com/whois-scanner/input.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Defines input file format for whois crawler",
+  "description": "Defines input file format for whois scanner",
   "type": "object",
   "properties": {
     "terms": {

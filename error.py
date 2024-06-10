@@ -20,7 +20,7 @@ class ErrorCodes(Enum):
         return super().__str__()
 
 
-class WhoisCrawlerException(Exception):
+class WhoisScannerException(Exception):
     '''Custom exception for this project'''
 
     def __init__(self, code: ErrorCodes):
