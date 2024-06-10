@@ -42,10 +42,13 @@ def extract_registrant_country(whois_result):
     return None
 
 
-def extract_domains(input_data):
+def extract_domains(input_data, pagenum, pagesize):
     '''Pull domain list out of the input file data'''
     if "domains" in input_data:
-        return input_data["domains"]
+        domains = input_data["domains"]
+        if pagesize is None:
+            return domains
+        return domains[pagesize*pagenum:pagesize*(pagenum+1)]
     raise WhoisCrawlerException(ErrorCodes.BAD_INPUT_FILE)
 
 
@@ -56,11 +59,11 @@ def extract_hostname(domain):
     raise WhoisCrawlerException(ErrorCodes.BAD_INPUT_FILE)
 
 
-def main():
+def main(pagenum, pagesize):
     '''Main function. Runs the full process.'''
     try:
         data = read_input()
-        domains = extract_domains(data)
+        domains = extract_domains(data, pagenum, pagesize)
     except WhoisCrawlerException as whoisexception:
         log.exception(whoisexception)
         return whoisexception.code
@@ -95,4 +98,10 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    PAGE_NUM = None
+    PAGE_SIZE = None
+    if len(sys.argv) >= 3:
+        PAGE_NUM = int(sys.argv[1])
+        PAGE_SIZE = int(sys.argv[2])
+
+    sys.exit(main(PAGE_NUM, PAGE_SIZE))
