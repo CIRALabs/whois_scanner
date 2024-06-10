@@ -100,13 +100,13 @@ def main(pagenum, pagesize):
             # Continue processing, but record the failure
         except Exception as ex:  # pylint: disable=broad-except
             log.exception(ex)
-            return -1  # stop processing immediately
+            return -100  # stop processing immediately
 
     DB.print_results()
     if len(failed_domains) > 0:
         log.error("Failed domains:")
         log.error(failed_domains)
-        return 100
+        return len(failed_domains)
     return 0
 
 

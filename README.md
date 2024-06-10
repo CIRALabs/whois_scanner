@@ -27,3 +27,9 @@ python3.10 main.py <pagenum> <pagesize>
 docker build -t whois-crawler:latest .
 docker run -it whois-crawler:latest <pagenum> <pagesize>
 ```
+
+## Exit codes
+The program has been written to split return codes into three categories:
+* Negative value: The program failed and halted execution
+* Zero value: The program succeeded
+* Positive value: The program had errors, but did not halt execution. The number returned is the number of errors encountered.

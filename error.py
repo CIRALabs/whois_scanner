@@ -6,9 +6,9 @@ from enum import Enum
 class ErrorCodes(Enum):
     '''List of error codes, and english user-friendly descriptions'''
 
-    FAILED_TO_READ_INPUT_FILE = 1
-    BAD_INPUT_FILE = 2
-    HOSTNAME_DOES_NOT_EXIST = 3
+    FAILED_TO_READ_INPUT_FILE = -1
+    BAD_INPUT_FILE = -2
+    HOSTNAME_DOES_NOT_EXIST = -3
 
     def __str__(self):
         if self == ErrorCodes.FAILED_TO_READ_INPUT_FILE:
