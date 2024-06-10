@@ -102,7 +102,7 @@ def main(pagenum, pagesize):
             log.exception(ex)
             return -100  # stop processing immediately
 
-    DB.print_results()
+    DB.output_results()
     if len(failed_domains) > 0:
         log.error("Failed domains:")
         log.error(failed_domains)

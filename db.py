@@ -14,6 +14,7 @@ class Db:
     def __str__(self):
         return str(self.DB)
 
-    def print_results(self):
-        '''Prints results to stdout'''
+    # Feature Request: Multiple output locations
+    def output_results(self):
+        '''Outputs the results stored in the DB'''
         print(self)
