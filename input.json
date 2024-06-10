@@ -1,5 +1,15 @@
 {
-  "terms": [],
+  "terms": {
+    "exact_match": [
+      "redacted for privacy",
+      "proxy",
+      "registration private",
+      "PERFECT PRIVACY, LLC"
+    ],
+    "prefix": [
+      "On behalf of"
+    ]
+  },
   "domains":
     [
       {

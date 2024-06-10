@@ -5,9 +5,20 @@
   "type": "object",
   "properties": {
     "terms": {
-      "type": "array",
-      "items": {
-        "type": "string"
+      "type": "object",
+      "properties": {
+        "exact_match": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "prefix": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "domains": {
