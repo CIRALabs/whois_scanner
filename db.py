@@ -1,8 +1,9 @@
 '''Data storage and retrieval interface'''
-from pprint import pprint
+import json
 
+SUCCESS_KEY = "succeed_domains"
 PRIVACY_KEY = "private_domains"
-FAILED_KEY = "failed_domains"
+FAILED_KEY  = "failed_domains"
 
 class Db:
     '''Provides an interface to store/retrieve results'''
@@ -11,9 +12,11 @@ class Db:
 
     def record_country(self, domain, country):
         '''Record a result'''
-        if country not in self.DB:
-            self.DB[country] = []
-        self.DB[country].append(domain)
+        if SUCCESS_KEY not in self.DB:
+            self.DB[SUCCESS_KEY] = {}
+        if country not in self.DB[SUCCESS_KEY]:
+            self.DB[SUCCESS_KEY][country] = []
+        self.DB[SUCCESS_KEY][country].append(domain)
 
     def record_flagged(self, domain, term):
         '''Record a privacy flagged domain'''
@@ -46,5 +49,4 @@ class Db:
     # Feature Request: Multiple output locations
     def output_results(self):
         '''Outputs the results stored in the DB'''
-        print("Final Results:")
-        pprint(self.DB)
+        print(json.dumps(self.DB, indent=4))
