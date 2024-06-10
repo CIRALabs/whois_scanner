@@ -51,11 +51,15 @@ def lookup(domain):
         raise ex
 
 
-def extract_registrant_country(whois_result):
-    '''Pull rant country out of the whois result'''
+def extract_registrant_data(whois_result):
+    '''Pull rant info out of the whois result'''
+    name = None
+    country = None
+    if "name" in whois_result:
+        name = whois_result["name"]
     if "country" in whois_result:
-        return whois_result["country"]
-    return None
+        country = whois_result["country"]
+    return (name, country)
 
 
 def extract_domains(input_data, pagenum, pagesize):
@@ -66,17 +70,39 @@ def extract_domains(input_data, pagenum, pagesize):
     return domains[pagesize*pagenum:pagesize*(pagenum+1)]
 
 
+def extract_terms(input_data):
+    '''Pull terms list out of the input file data'''
+    if "terms" in input_data:
+        return input_data["terms"]
+    return []
+
+
 def extract_hostname(domain):
     '''Pull hostname from input file data'''
     return domain["hostname"]
 
 
+def country_is_flag(terms, name):
+    '''Determines if this is a value indicating a 'private' registration'''
+    if name is None:
+        return False
+    if "exact_match" in terms:
+        if name in terms["exact_match"]:
+            return True
+    if "prefix" in terms:
+        for term in terms["prefix"]:
+            if term.startswith(name):
+                return True
+    return False
+
 def main(pagenum, pagesize):
     '''Main function. Runs the full process.'''
     try:
+        log.info("Processing input data")
         raw_json = read_input()
         data = parse_input(raw_json)
         domains = extract_domains(data, pagenum, pagesize)
+        terms = extract_terms(data)
     except WhoisCrawlerException as whoisexception:
         log.exception(whoisexception)
         return whoisexception.code
@@ -85,12 +111,23 @@ def main(pagenum, pagesize):
         return -1
 
     failed_domains = []
+    index = 0
+    log.info("Begin whois lookup for %d hostnames", len(domains))
     for domain in domains:
+        if index % 100 == 0:
+            log.info("Processing host (%d of %d)", index, len(domains))
         try:
             hostname = extract_hostname(domain)
+            log.debug("Looking up hostname %s", hostname)
             whois_result = lookup(hostname)
-            country = extract_registrant_country(whois_result)
-            DB.record_country(hostname, country)
+            (name, country) = extract_registrant_data(whois_result)
+            if country_is_flag(terms, name):
+                log.debug("# Hostname %s was marked as a privacy flag. Reason %s.", hostname, name)
+                DB.record_flagged(hostname, name)
+            else:
+                log.debug("# Hostname %s was recorded for country %s.", hostname, country)
+                DB.record_country(hostname, country)
+            index += 1
         except WhoisCrawlerException as whoisexception:
             failed_domains.append(
                 {"domain": domain, "cause": str(whoisexception)})
