@@ -2,11 +2,14 @@ from enum import Enum
 
 
 class ErrorCodes(Enum):
-  FAILED_TO_READ_INPUT_FILE = 1
+  FAILED_TO_READ_INPUT_FILE = 1,
+  BAD_INPUT_FILE = 2
 
   def __str__(self):
     if self == ErrorCodes.FAILED_TO_READ_INPUT_FILE:
       return "Failed to read input file"
+    elif self == ErrorCodes.BAD_INPUT_FILE:
+      return "Bad input file"
     else:
       return super().__str__()
 

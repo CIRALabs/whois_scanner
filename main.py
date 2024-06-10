@@ -26,10 +26,16 @@ def extract_registrant_country(whois_result):
     return None
 
 def extract_domains(input_data):
-  return input_data["domains"] # TODO: Error handling for bad input file?
+  if "domains" in input_data:
+    return input_data["domains"]
+  else:
+    raise WhoisCrawlerException(ErrorCodes.BAD_INPUT_FILE)
 
 def extract_hostname(domain):
-  return domain["hostname"] # TODO: Error handling for bad input file?
+  if "hostname" in domain:
+    return domain["hostname"]
+  else:
+    raise WhoisCrawlerException(ErrorCodes.BAD_INPUT_FILE)
 
 def record_country(domain, country):
   if country not in DB:
