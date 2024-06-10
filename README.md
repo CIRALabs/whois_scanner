@@ -17,9 +17,23 @@ The data should conform to the [JSON schema](./input.schema.json):
 Script accepts two arguments: `pagenum` (starts at 0) and `pagesize`. If these are not provided, then the whole list will be processed.
 
 ## Localhost
+Before you can run the program, you should create a virtual environment for the python executable
 ```bash
-python3.10 main.py <pagenum> <pagesize>
+python3.10 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
+
+Then, you can run the program
+```bash
+python main.py <pagenum> <pagesize>
+```
+
+Or as a paged loop:
+```bash
+bash run_local_paged.sh 100
+```
+
 
 ## Docker
 <em>TODO: This is still in the works, as the input.json file has to be embedded into the docker container.</em>
