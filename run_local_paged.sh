@@ -1,6 +1,11 @@
 #!/bin/bash
 
-pagesize=$1
+if [ -z "$1" ]; then
+  pagesize=100
+else
+  pagesize=$1
+fi
+
 size=$(cat input.json | jq '.domains | length')
 pages=$((($size + $pagesize - 1) / $pagesize)) # Round Up
 failed_count=0
