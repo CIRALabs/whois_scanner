@@ -15,7 +15,8 @@ INPUT_FILE = "input.json"
 ENCODING = "UTF-8"
 DB = Db()
 
-log = logging.getLogger()
+logging.basicConfig(level=logging.DEBUG)
+log = logging.getLogger(__name__)
 
 
 # Feature Request: Read from other sources beyond local file system
@@ -57,6 +58,8 @@ def extract_registrant_data(whois_result):
     country = None
     if "name" in whois_result:
         name = whois_result["name"]
+    if name is None and "org" in whois_result:
+        name = whois_result["org"]
     if "country" in whois_result:
         country = whois_result["country"]
     return (name, country)
@@ -82,18 +85,19 @@ def extract_hostname(domain):
     return domain["hostname"]
 
 
-def country_is_flag(terms, name):
+def name_privacy_match(terms, name):
     '''Determines if this is a value indicating a 'private' registration'''
+    log.debug("Checking %s for privacy flag", name)
     if name is None:
-        return False
+        return None
     if "exact_match" in terms:
         if name in terms["exact_match"]:
-            return True
+            return name
     if "prefix" in terms:
         for term in terms["prefix"]:
-            if term.startswith(name):
-                return True
-    return False
+            if name.startswith(term):
+                return f"prefix:{term}"
+    return None
 
 def main(pagenum, pagesize):
     '''Main function. Runs the full process.'''
@@ -121,18 +125,21 @@ def main(pagenum, pagesize):
             log.debug("Looking up hostname %s", hostname)
             whois_result = lookup(hostname)
             (name, country) = extract_registrant_data(whois_result)
-            if country_is_flag(terms, name):
-                log.debug("# Hostname %s was marked as a privacy flag. Reason %s.", hostname, name)
-                DB.record_flagged(hostname, name)
+            privacy_term_match = name_privacy_match(terms, name)
+            if privacy_term_match is not None:
+                log.debug("# Hostname %s was marked as a privacy flag. Term Match: %s.", hostname, privacy_term_match)
+                DB.record_flagged(hostname, privacy_term_match)
             else:
                 log.debug("# Hostname %s was recorded for country %s.", hostname, country)
                 DB.record_country(hostname, country)
             index += 1
         except WhoisCrawlerException as whoisexception:
+            log.debug("# Hostname %s was marked failed. %s", domain, str(whoisexception))
             failed_domains.append(
                 {"domain": domain, "cause": str(whoisexception)})
             # Continue processing, but record the failure
         except whois.parser.PywhoisError as ex:
+            log.debug("# Hostname %s was marked failed. %s", domain, str(ex))
             failed_domains.append({"domain": domain, "cause": ex})
             # Continue processing, but record the failure
         except Exception as ex:  # pylint: disable=broad-except
