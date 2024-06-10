@@ -15,7 +15,7 @@ INPUT_FILE = "input.json"
 ENCODING = "UTF-8"
 DB = Db()
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 log = logging.getLogger(__name__)
 
 

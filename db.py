@@ -1,4 +1,5 @@
 '''Data storage and retrieval interface'''
+from pprint import pprint
 
 PRIVACY_KEY = "private_domains"
 
@@ -27,4 +28,5 @@ class Db:
     # Feature Request: Multiple output locations
     def output_results(self):
         '''Outputs the results stored in the DB'''
-        print(self)
+        print("Final Results:")
+        pprint(self.DB)
