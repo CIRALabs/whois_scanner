@@ -30,8 +30,8 @@ python main.py
 
 ## Docker
 ```bash
-docker build -t whois-crawler:latest .
-docker run -it whois-crawler:latest
+docker build -t whois_scanner:latest .
+docker run -it whois_scanner:latest
 ```
 
 ## Exit codes
@@ -78,9 +78,9 @@ At the end of the execution, it will output the # of domains that were considere
 Similar to the local python execution, you can provide the `pagenum` and `pagesize` arguments to the docker script. The same logic will apply as above in determining which domains will be processed by the docker container.
 
 ```bash
-docker build -t whois-crawler:latest .
-docker run -it whois-crawler:latest 0 2
-docker run -it whois-crawler:latest 1 2
+docker build -t whois_scanner:latest .
+docker run -it whois_scanner:latest 0 2
+docker run -it whois_scanner:latest 1 2
 ```
 
 A similar bash script is also provided to run multiple docker images in a paging scenario. This script will automatically build & run the docker containers:
