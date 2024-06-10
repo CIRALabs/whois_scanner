@@ -25,7 +25,7 @@ def read_input():
         with open(INPUT_FILE, encoding=ENCODING) as json_file:
             json_data = json.load(json_file)
             return json_data
-    except Exception as ex:
+    except IOError as ex:
         raise WhoisCrawlerException(ErrorCodes.FAILED_TO_READ_INPUT_FILE) from ex
 
 
