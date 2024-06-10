@@ -114,7 +114,6 @@ def main(pagenum, pagesize):
         log.exception(ex)
         return -1
 
-    failed_domains = []
     index = 0
     log.info("Begin whois lookup for %d hostnames", len(domains))
     for domain in domains:
@@ -127,7 +126,8 @@ def main(pagenum, pagesize):
             (name, country) = extract_registrant_data(whois_result)
             privacy_term_match = name_privacy_match(terms, name)
             if privacy_term_match is not None:
-                log.debug("# Hostname %s was marked as a privacy flag. Term Match: %s.", hostname, privacy_term_match)
+                log.debug("# Hostname %s was marked as a privacy flag. Term Match: %s.",
+                          hostname, privacy_term_match)
                 DB.record_flagged(hostname, privacy_term_match)
             else:
                 log.debug("# Hostname %s was recorded for country %s.", hostname, country)
@@ -135,23 +135,16 @@ def main(pagenum, pagesize):
             index += 1
         except WhoisCrawlerException as whoisexception:
             log.debug("# Hostname %s was marked failed. %s", domain, str(whoisexception))
-            failed_domains.append(
-                {"domain": domain, "cause": str(whoisexception)})
-            # Continue processing, but record the failure
+            DB.record_failed(domain, str(whoisexception))
         except whois.parser.PywhoisError as ex:
             log.debug("# Hostname %s was marked failed. %s", domain, str(ex))
-            failed_domains.append({"domain": domain, "cause": ex})
-            # Continue processing, but record the failure
+            DB.record_failed(domain, str(ex))
         except Exception as ex:  # pylint: disable=broad-except
             log.exception(ex)
             return -100  # stop processing immediately
 
     DB.output_results()
-    if len(failed_domains) > 0:
-        log.error("Failed domains:")
-        log.error(failed_domains)
-        return len(failed_domains)
-    return 0
+    return DB.get_failed_domain_count()
 
 
 if __name__ == "__main__":
