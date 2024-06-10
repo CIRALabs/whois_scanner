@@ -18,19 +18,26 @@ DB = Db()
 log = logging.getLogger()
 
 
+# Feature Request: Read from other sources beyond local file system
 def read_input():
     '''Read from input file'''
     try:
-        with (open(INPUT_FILE, encoding=ENCODING) as json_file,
-              open(SCHEMA_FILE, encoding=ENCODING) as schema_file):
+        with open(INPUT_FILE, encoding=ENCODING) as json_file:
             json_data = json.load(json_file)
+            return json_data
+    except Exception as ex:
+        raise WhoisCrawlerException(ErrorCodes.FAILED_TO_READ_INPUT_FILE) from ex
+
+
+def parse_input(json_data):
+    '''Gather input file data and validate against schema'''
+    try:
+        with open(SCHEMA_FILE, encoding=ENCODING) as schema_file:
             schema = json.load(schema_file)
             jsonschema.validate(instance=json_data, schema=schema) # Will raise exception if invalid
             return json_data
     except jsonschema.exceptions.ValidationError as ex:
         raise WhoisCrawlerException(ErrorCodes.BAD_INPUT_FILE) from ex
-    except Exception as ex:
-        raise WhoisCrawlerException(ErrorCodes.FAILED_TO_READ_INPUT_FILE) from ex
 
 
 def lookup(domain):
@@ -67,7 +74,8 @@ def extract_hostname(domain):
 def main(pagenum, pagesize):
     '''Main function. Runs the full process.'''
     try:
-        data = read_input()
+        raw_json = read_input()
+        data = parse_input(raw_json)
         domains = extract_domains(data, pagenum, pagesize)
     except WhoisCrawlerException as whoisexception:
         log.exception(whoisexception)
