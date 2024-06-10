@@ -52,3 +52,15 @@ The program has been written to split return codes into three categories:
 * Negative value: The program failed and halted execution
 * Zero value: The program succeeded
 * Positive value: The program had errors, but did not halt execution. The number returned is the number of errors encountered.
+
+## Logging
+By default, the program is set to use ERROR only logging levels. However this can be controlled with the `LOGLEVEL` environment variable. It will accept the following values:
+* DEBUG
+* INFO
+* WARN
+* ERROR
+
+An example of how to set the logging level:
+```bash
+LOGLEVEL=INFO python main.py
+```

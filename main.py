@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 import sys
 
 import jsonschema
@@ -15,7 +16,8 @@ INPUT_FILE = "input.json"
 ENCODING = "UTF-8"
 DB = Db()
 
-logging.basicConfig(level=logging.ERROR)
+LOGLEVEL = os.environ.get('LOGLEVEL', 'ERROR').upper()
+logging.basicConfig(level=LOGLEVEL)
 log = logging.getLogger(__name__)
 
 
@@ -117,8 +119,8 @@ def main(pagenum, pagesize):
     index = 0
     log.info("Begin whois lookup for %d hostnames", len(domains))
     for domain in domains:
-        if index % 100 == 0:
-            log.info("Processing host (%d of %d)", index, len(domains))
+        if index % 10 == 0:
+            log.info("Processing host [%d of %d] (will output every 10)", index, len(domains))
         try:
             hostname = extract_hostname(domain)
             log.debug("Looking up hostname %s", hostname)
