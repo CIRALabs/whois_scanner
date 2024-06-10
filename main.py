@@ -72,6 +72,7 @@ def main():
     except Exception as ex:
       log.exception(ex)
       return -1 # stop processing immediately
+  
   DB.print_results()
   if len(failed_domains) > 0:
     log.error("Failed domains:")
