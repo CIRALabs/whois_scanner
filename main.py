@@ -3,8 +3,8 @@ import whois
 import json
 import logging
 
-INPUT_FILE = "input.jsona"
-
+INPUT_FILE = "input.json"
+DB = {}
 
 log = logging.getLogger()
 
@@ -19,16 +19,33 @@ def lookup(domain):
   resp = whois.whois(domain)
   return resp
 
-def extract_registrant(whois_result):
-  if whois_result.has("country"):
+def extract_registrant_country(whois_result):
+  if "country" in whois_result:
     return whois_result["country"]
   else:
     return None
 
+def extract_domains(input_data):
+  return input_data["domains"] # TODO: Error handling for bad input file?
+
+def extract_hostname(domain):
+  return domain["hostname"] # TODO: Error handling for bad input file?
+
+def record_country(domain, country):
+  if country not in DB:
+    DB[country] = []
+  DB[country].append(domain)
+
 def main():
   try:
     data = read_input()
-    print(data)
+    domains = extract_domains(data)
+    for domain in domains:
+      hostname = extract_hostname(domain)
+      whois_result = lookup(hostname)
+      country = extract_registrant_country(whois_result)
+      record_country(hostname, country)
+    print(DB)
   except WhoisCrawlerException as whoisexception:
     log.exception(whoisexception)
     return whoisexception.code

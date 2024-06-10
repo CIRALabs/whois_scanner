@@ -3,7 +3,7 @@
   "domains":
     [
       {
-        "tld": "ca"
+        "hostname": "google.com"
       }
     ]
 }
