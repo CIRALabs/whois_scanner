@@ -67,9 +67,8 @@ python main.py 1 2
 We've also included a bash script to help run multiple executions. This script takes a single argument of `pagesize` and will parse the input file to determine how many pages need to be executed.
 
 The example below, assuming a input list of 4 elements, will process two pages. The first will process indexes [0, 1, 2] and the second will process index 3.
-*TODO: This currently still runs in sequence. It should be updated to run in parallel*
 ```bash
-bash run_local_paged.sh 3
+bash run_local_parallel.sh 3
 ```
 
 At the end of the execution, it will output the # of domains that were considered 'invalid' based on the exit codes returned.
