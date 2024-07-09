@@ -28,7 +28,7 @@ class Db:
             self.DB[SUCCESS_KEY][country] = []
         self.DB[SUCCESS_KEY][country].append(domain)
 
-    def record_flagged(self, domain, term):
+    def record_flagged(self, domain: str, term: str = "_"):
         '''Record a privacy flagged domain'''
         if PRIVACY_KEY not in self.DB:
             self.DB[PRIVACY_KEY] = {}

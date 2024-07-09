@@ -4,6 +4,7 @@ import csv
 import json
 import logging
 import os
+import re
 import sys
 from typing import Any, List, Tuple
 
@@ -25,6 +26,7 @@ OUTPUT_FILE = "output.csv"
 ENCODING = "UTF-8"
 DB = Db()
 
+PRIVACY_REGEX = re.compile("private|proxy|redacted|privacy", re.IGNORECASE)
 LOGLEVEL = os.environ.get('LOGLEVEL', 'ERROR').upper()
 logging.basicConfig(level=LOGLEVEL)
 log = logging.getLogger(__name__)
@@ -112,32 +114,12 @@ def extract_terms(input_data: Any) -> List[Any]:
     return []
 
 
-def name_privacy_match(terms: List[Any], whois_result: Any) -> str:
-    '''Checks name or org fields for privacy indicator'''
-    name = None
-    if "name" in whois_result:
-        name = whois_result["name"]
-    if name is None and "org" in whois_result:
-        name = whois_result["org"]
-    log.debug("Checking %s for privacy flag", name)
-    if name is None:
-        return None
-    if "exact_match" in terms:
-        if name in terms["exact_match"]:
-            return name
-    if "prefix" in terms:
-        for term in terms["prefix"]:
-            if name.startswith(term):
-                return f"prefix:{term}"
-    return None
-
-
-def privacy_match(terms: List[Any], whois_result: Any) -> str:
+def privacy_match(whois_result: str) -> bool:
     '''Determines if this is a value indicating a 'private' registration'''
-    name_match = name_privacy_match(terms, whois_result)
-    if name_match is not None:
-        return name_match
-    return None
+    for key in whois_result:
+        if PRIVACY_REGEX.match(str(whois_result[key])) is not None:
+            return True
+    return False
 
 
 def main(pagenum: int, pagesize: int) -> int:
@@ -162,11 +144,10 @@ def main(pagenum: int, pagesize: int) -> int:
             log.debug("Looking up hostname %s", domain)
             whois_result = lookup(domain)
             country = extract_registrant_country(whois_result)
-            privacy_term_match = privacy_match(terms, whois_result)
-            if privacy_term_match is not None:
-                log.debug("# Hostname %s was marked as a privacy flag. Term Match: %s.",
-                          domain, privacy_term_match)
-                DB.record_flagged(domain, privacy_term_match)
+            privacy_term_match = privacy_match(whois_result)
+            if privacy_term_match:
+                log.debug("# Hostname %s was marked as a privacy flag.", domain)
+                DB.record_flagged(domain=domain)
             else:
                 log.debug("# Hostname %s was recorded for country %s.",
                           domain, country)
