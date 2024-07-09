@@ -15,7 +15,7 @@ class Db:
 
     class Format(Enum):
         '''Output formats'''
-        JSON =  1,
+        JSON = 1,
         CSV = 2
 
     DB = {}
@@ -79,11 +79,13 @@ class Db:
         if SUCCESS_KEY in self.DB:
             for country in self.DB[SUCCESS_KEY]:
                 for domain in self.DB[SUCCESS_KEY][country]:
-                    data.append({"country": "N/A" if country is None else country, "domain": domain})
+                    data.append(
+                        {"country": "N/A" if country is None else country, "domain": domain})
         if PRIVACY_KEY in self.DB:
             for term in self.DB[PRIVACY_KEY]:
                 for domain in self.DB[PRIVACY_KEY][term]:
-                    data.append({"country": f"Privacy Protected ({term})", "domain": domain})
+                    data.append(
+                        {"country": f"Privacy Protected ({term})", "domain": domain})
         if FAILED_KEY in self.DB:
             for domain in self.DB[FAILED_KEY]:
                 data.append({"country": "Failed", "domain": domain})
