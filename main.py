@@ -8,11 +8,15 @@ import sys
 from typing import Any, List, Tuple
 
 import jsonschema
+from ratelimit import sleep_and_retry, limits
 import whois
 
 from error import WhoisScannerException, ErrorCodes
 from db import Db
 
+# Basic rate limiting: 5 requests per 20 seconds
+RATELIMIT_REQUESTS = 5    # Number of requests to rate limit
+RATELIMIT_TIMERANGE = 20  # Amount of time to rate limit
 SCHEMA_FILE = "rules.schema.json"
 RULES_FILE = "rules.json"
 DOMAINS_FILE = "input.csv"
@@ -60,6 +64,14 @@ def parse_input(json_data: Any) -> None:
         raise WhoisScannerException(ErrorCodes.BAD_INPUT_FILE) from ex
 
 
+# Adding throttling
+# This is actually very basic.
+# The whois library sends queries to the appropriate NIC servers, so we're overly-throttling here.
+# More logic could be added to ask the whois library:
+#   WHICH server the domain's request would be sent to, and then throttle per-server.
+# This would likely be done by creating a NICClient, then using client.choose_server
+@sleep_and_retry
+@limits(calls=RATELIMIT_REQUESTS, period=RATELIMIT_TIMERANGE)
 def lookup(domain: str) -> Any:
     '''Perform the whois lookup'''
     try:
@@ -89,9 +101,10 @@ def extract_domains(input_data: Any, pagenum: int, pagesize: int) -> List[str]:
     '''Pull domain list out of the input file data'''
     if pagesize is None:
         return input_data
-    start=pagesize*pagenum
-    stop=pagesize*(pagenum+1)
-    specific_rows=[row for idx, row in enumerate(input_data) if idx in range(start, stop)]
+    start = pagesize*pagenum
+    stop = pagesize*(pagenum+1)
+    specific_rows = [row for idx, row in enumerate(
+        input_data) if idx in range(start, stop)]
     return [row["input_url"] for row in specific_rows]
 
 
