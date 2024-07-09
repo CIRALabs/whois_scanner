@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import sys
+from typing import Any, List, Tuple
 
 import jsonschema
 import whois
@@ -22,7 +23,7 @@ log = logging.getLogger(__name__)
 
 
 # Feature Request: Read from other sources beyond local file system
-def read_input():
+def read_input() -> Any:
     '''Read from input file'''
     try:
         with open(INPUT_FILE, encoding=ENCODING) as json_file:
@@ -32,7 +33,7 @@ def read_input():
         raise WhoisScannerException(ErrorCodes.FAILED_TO_READ_INPUT_FILE) from ex
 
 
-def parse_input(json_data):
+def parse_input(json_data: Any) -> Any:
     '''Gather input file data and validate against schema'''
     try:
         with open(SCHEMA_FILE, encoding=ENCODING) as schema_file:
@@ -43,7 +44,7 @@ def parse_input(json_data):
         raise WhoisScannerException(ErrorCodes.BAD_INPUT_FILE) from ex
 
 
-def lookup(domain):
+def lookup(domain: str) -> Any:
     '''Perform the whois lookup'''
     try:
         resp = whois.whois(domain)
@@ -54,7 +55,7 @@ def lookup(domain):
         raise ex
 
 
-def extract_registrant_data(whois_result):
+def extract_registrant_data(whois_result: Any) -> Tuple[str, str]:
     '''Pull rant info out of the whois result'''
     name = None
     country = None
@@ -67,7 +68,7 @@ def extract_registrant_data(whois_result):
     return (name, country)
 
 
-def extract_domains(input_data, pagenum, pagesize):
+def extract_domains(input_data: Any, pagenum: int, pagesize: int) -> List[str]:
     '''Pull domain list out of the input file data'''
     domains = input_data["domains"]
     if pagesize is None:
@@ -75,19 +76,19 @@ def extract_domains(input_data, pagenum, pagesize):
     return domains[pagesize*pagenum:pagesize*(pagenum+1)]
 
 
-def extract_terms(input_data):
+def extract_terms(input_data: Any) -> List[Any]:
     '''Pull terms list out of the input file data'''
     if "terms" in input_data:
         return input_data["terms"]
     return []
 
 
-def extract_hostname(domain):
+def extract_hostname(domain: Any) -> str:
     '''Pull hostname from input file data'''
     return domain["hostname"]
 
 
-def name_privacy_match(terms, name):
+def name_privacy_match(terms: List[Any], name: str) -> str:
     '''Determines if this is a value indicating a 'private' registration'''
     log.debug("Checking %s for privacy flag", name)
     if name is None:
@@ -101,7 +102,7 @@ def name_privacy_match(terms, name):
                 return f"prefix:{term}"
     return None
 
-def main(pagenum, pagesize):
+def main(pagenum: int, pagesize: int) -> int:
     '''Main function. Runs the full process.'''
     try:
         log.info("Processing input data")
