@@ -76,8 +76,11 @@ class Db:
         if SUCCESS_KEY in self.DB:
             for country in self.DB[SUCCESS_KEY]:
                 for domain in self.DB[SUCCESS_KEY][country]:
-                    data.append(
-                        {"domain": domain, "private": False, "country": "N/A" if country is None else country})
+                    data.append({
+                        "domain": domain,
+                        "private": False,
+                        "country": "N/A" if country is None else country
+                    })
         if PRIVACY_KEY in self.DB:
             for domain in self.DB[PRIVACY_KEY]:
                 data.append(
