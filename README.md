@@ -27,6 +27,11 @@ Specifically the global variables at the top of the file `RATELIMIT_REQUESTS` an
 These values define how many requests may be made within a specific time range (for example, 5 requests every 20 seconds).
 As of right now, there's no way to adjust these dynamically per invocation of the program based on command line parameters - it must be done with hard-coded values.
 
+### Output
+The program can output in either of two formats: JSON or CSV
+Right now, this is handled by hard-coded values at the top of the file.
+The location of the output is also handled by the hard-coded values at the top of the file.
+
 ## Localhost
 Before you can run the program, you should create a virtual environment for the python executable
 ```bash
