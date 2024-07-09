@@ -1,14 +1,12 @@
 '''Main executable file'''
 
 import csv
-import json
 import logging
 import os
 import re
 import sys
-from typing import Any, List, Tuple
+from typing import Any, List
 
-import jsonschema
 from ratelimit import sleep_and_retry, limits
 import whois
 
@@ -18,8 +16,6 @@ from db import Db
 # Basic rate limiting: 5 requests per 20 seconds
 RATELIMIT_REQUESTS = 50    # Number of requests to rate limit
 RATELIMIT_TIMERANGE = 60   # Amount of time to rate limit
-SCHEMA_FILE = "rules.schema.json"
-RULES_FILE = "rules.json"
 DOMAINS_FILE = "input.csv"
 OUTPUT_FORMAT = Db.Format.CSV
 OUTPUT_FILE = "output.csv"
@@ -33,19 +29,8 @@ log = logging.getLogger(__name__)
 
 
 # Feature Request: Read from other sources beyond local file system
-def read_input(pagenum: int, pagesize: int) -> Tuple[Any, List[str]]:
-    '''Read from input files'''
-    try:
-        with open(RULES_FILE, encoding=ENCODING) as rules_file:
-            rules_data = json.load(rules_file)
-            parse_input(rules_data)
-            terms = extract_terms(rules_data)
-    except FileNotFoundError:
-        terms = {}
-    except IOError as ex:
-        raise WhoisScannerException(
-            ErrorCodes.FAILED_TO_READ_INPUT_FILE) from ex
-
+def read_input(pagenum: int, pagesize: int) -> List[str]:
+    '''Read from input file'''
     try:
         with open(DOMAINS_FILE, encoding=ENCODING) as domains_file:
             csv_data = csv.DictReader(domains_file)
@@ -54,18 +39,7 @@ def read_input(pagenum: int, pagesize: int) -> Tuple[Any, List[str]]:
         raise WhoisScannerException(
             ErrorCodes.FAILED_TO_READ_INPUT_FILE) from ex
 
-    return (terms, domains)
-
-
-def parse_input(json_data: Any) -> None:
-    '''Gather input file data and validate against schema'''
-    try:
-        with open(SCHEMA_FILE, encoding=ENCODING) as schema_file:
-            schema = json.load(schema_file)
-            # Will raise exception if invalid
-            jsonschema.validate(instance=json_data, schema=schema)
-    except jsonschema.exceptions.ValidationError as ex:
-        raise WhoisScannerException(ErrorCodes.BAD_INPUT_FILE) from ex
+    return domains
 
 
 # Adding throttling
@@ -126,7 +100,7 @@ def main(pagenum: int, pagesize: int) -> int:
     '''Main function. Runs the full process.'''
     try:
         log.info("Processing input data")
-        terms, domains = read_input(pagenum, pagesize)
+        domains = read_input(pagenum, pagesize)
     except WhoisScannerException as whoisexception:
         log.exception(whoisexception)
         return whoisexception.code
