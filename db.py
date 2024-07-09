@@ -28,13 +28,11 @@ class Db:
             self.DB[SUCCESS_KEY][country] = []
         self.DB[SUCCESS_KEY][country].append(domain)
 
-    def record_flagged(self, domain, term):
+    def record_flagged(self, domain: str):
         '''Record a privacy flagged domain'''
         if PRIVACY_KEY not in self.DB:
-            self.DB[PRIVACY_KEY] = {}
-        if term not in self.DB[PRIVACY_KEY]:
-            self.DB[PRIVACY_KEY][term] = []
-        self.DB[PRIVACY_KEY][term].append(domain)
+            self.DB[PRIVACY_KEY] = []
+        self.DB[PRIVACY_KEY].append(domain)
 
     def record_failed(self, domain, reason):
         '''Record a failed domain lookup'''
@@ -73,21 +71,24 @@ class Db:
 
     def _output_results_csv(self, output_loc: TextIOWrapper = None):
         '''Outputs the results stored in the DB to a CSV file'''
-        fieldnames = ["domain", "country"]
+        fieldnames = ["domain", "private", "country"]
         data = []
         if SUCCESS_KEY in self.DB:
             for country in self.DB[SUCCESS_KEY]:
                 for domain in self.DB[SUCCESS_KEY][country]:
-                    data.append(
-                        {"country": "N/A" if country is None else country, "domain": domain})
+                    data.append({
+                        "domain": domain,
+                        "private": False,
+                        "country": "N/A" if country is None else country
+                    })
         if PRIVACY_KEY in self.DB:
-            for term in self.DB[PRIVACY_KEY]:
-                for domain in self.DB[PRIVACY_KEY][term]:
-                    data.append(
-                        {"country": f"Privacy Protected ({term})", "domain": domain})
+            for domain in self.DB[PRIVACY_KEY]:
+                data.append(
+                    {"domain": domain, "private": True, "country": "Privacy Protected"})
         if FAILED_KEY in self.DB:
             for domain in self.DB[FAILED_KEY]:
-                data.append({"country": "Failed", "domain": domain})
+                data.append(
+                    {"domain": domain, "private": False, "country": "Failed"})
         writer = csv.DictWriter(output_loc, fieldnames=fieldnames)
         if output_loc is None:
             output_loc = sys.stdout
