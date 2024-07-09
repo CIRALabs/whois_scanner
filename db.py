@@ -84,7 +84,8 @@ class Db:
                     {"domain": domain, "private": True, "country": "Privacy Protected"})
         if FAILED_KEY in self.DB:
             for domain in self.DB[FAILED_KEY]:
-                data.append({"domain": domain, "private": False, "country": "Failed"})
+                data.append(
+                    {"domain": domain, "private": False, "country": "Failed"})
         writer = csv.DictWriter(output_loc, fieldnames=fieldnames)
         if output_loc is None:
             output_loc = sys.stdout
