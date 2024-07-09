@@ -15,8 +15,8 @@ from error import WhoisScannerException, ErrorCodes
 from db import Db
 
 # Basic rate limiting: 5 requests per 20 seconds
-RATELIMIT_REQUESTS=5    # Number of requests to rate limit
-RATELIMIT_TIMERANGE=20  # Amount of time to rate limit
+RATELIMIT_REQUESTS = 5    # Number of requests to rate limit
+RATELIMIT_TIMERANGE = 20  # Amount of time to rate limit
 SCHEMA_FILE = "rules.schema.json"
 RULES_FILE = "rules.json"
 DOMAINS_FILE = "input.csv"
@@ -99,9 +99,10 @@ def extract_domains(input_data: Any, pagenum: int, pagesize: int) -> List[str]:
     '''Pull domain list out of the input file data'''
     if pagesize is None:
         return input_data
-    start=pagesize*pagenum
-    stop=pagesize*(pagenum+1)
-    specific_rows=[row for idx, row in enumerate(input_data) if idx in range(start, stop)]
+    start = pagesize*pagenum
+    stop = pagesize*(pagenum+1)
+    specific_rows = [row for idx, row in enumerate(
+        input_data) if idx in range(start, stop)]
     return [row["input_url"] for row in specific_rows]
 
 
