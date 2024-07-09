@@ -15,7 +15,7 @@ class Db:
 
     class Format(Enum):
         '''Output formats'''
-        JSON = 1,
+        JSON = 1
         CSV = 2
 
     DB = {}
