@@ -1,5 +1,6 @@
 '''Main executable file'''
 
+import csv
 import json
 import logging
 import os
@@ -12,8 +13,9 @@ import whois
 from error import WhoisScannerException, ErrorCodes
 from db import Db
 
-SCHEMA_FILE = "input.schema.json"
-INPUT_FILE = "input.json"
+SCHEMA_FILE = "rules.schema.json"
+RULES_FILE = "rules.json"
+DOMAINS_FILE = "input.csv"
 ENCODING = "UTF-8"
 DB = Db()
 
@@ -23,25 +25,35 @@ log = logging.getLogger(__name__)
 
 
 # Feature Request: Read from other sources beyond local file system
-def read_input() -> Any:
-    '''Read from input file'''
+def read_input(pagenum: int, pagesize: int) -> Tuple[Any, List[str]]:
+    '''Read from input files'''
     try:
-        with open(INPUT_FILE, encoding=ENCODING) as json_file:
-            json_data = json.load(json_file)
-            return json_data
+        with open(RULES_FILE, encoding=ENCODING) as rules_file:
+            rules_data = json.load(rules_file)
+            parse_input(rules_data)
+            terms = extract_terms(rules_data)
     except IOError as ex:
         raise WhoisScannerException(
             ErrorCodes.FAILED_TO_READ_INPUT_FILE) from ex
 
+    try:
+        with open(DOMAINS_FILE, encoding=ENCODING) as domains_file:
+            csv_data = csv.DictReader(domains_file)
+            domains = extract_domains(csv_data, pagenum, pagesize)
+    except IOError as ex:
+        raise WhoisScannerException(
+            ErrorCodes.FAILED_TO_READ_INPUT_FILE) from ex
 
-def parse_input(json_data: Any) -> Any:
+    return (terms, domains)
+
+
+def parse_input(json_data: Any) -> None:
     '''Gather input file data and validate against schema'''
     try:
         with open(SCHEMA_FILE, encoding=ENCODING) as schema_file:
             schema = json.load(schema_file)
             # Will raise exception if invalid
             jsonschema.validate(instance=json_data, schema=schema)
-            return json_data
     except jsonschema.exceptions.ValidationError as ex:
         raise WhoisScannerException(ErrorCodes.BAD_INPUT_FILE) from ex
 
@@ -73,10 +85,12 @@ def extract_registrant_data(whois_result: Any) -> Tuple[str, str]:
 
 def extract_domains(input_data: Any, pagenum: int, pagesize: int) -> List[str]:
     '''Pull domain list out of the input file data'''
-    domains = input_data["domains"]
     if pagesize is None:
-        return domains
-    return domains[pagesize*pagenum:pagesize*(pagenum+1)]
+        return input_data
+    start=pagesize*pagenum
+    stop=pagesize*(pagenum+1)
+    specific_rows=[row for idx, row in enumerate(input_data) if idx in range(start, stop)]
+    return [row["input_url"] for row in specific_rows]
 
 
 def extract_terms(input_data: Any) -> List[Any]:
@@ -84,11 +98,6 @@ def extract_terms(input_data: Any) -> List[Any]:
     if "terms" in input_data:
         return input_data["terms"]
     return []
-
-
-def extract_hostname(domain: Any) -> str:
-    '''Pull hostname from input file data'''
-    return domain["hostname"]
 
 
 def name_privacy_match(terms: List[Any], name: str) -> str:
@@ -110,10 +119,9 @@ def main(pagenum: int, pagesize: int) -> int:
     '''Main function. Runs the full process.'''
     try:
         log.info("Processing input data")
-        raw_json = read_input()
-        data = parse_input(raw_json)
-        domains = extract_domains(data, pagenum, pagesize)
-        terms = extract_terms(data)
+        terms, domains = read_input(pagenum, pagesize)
+        print(domains)
+        print(terms)
     except WhoisScannerException as whoisexception:
         log.exception(whoisexception)
         return whoisexception.code
@@ -128,19 +136,18 @@ def main(pagenum: int, pagesize: int) -> int:
             log.info(
                 "Processing host [%d of %d] (will output every 10)", index, len(domains))
         try:
-            hostname = extract_hostname(domain)
-            log.debug("Looking up hostname %s", hostname)
-            whois_result = lookup(hostname)
+            log.debug("Looking up hostname %s", domain)
+            whois_result = lookup(domain)
             (name, country) = extract_registrant_data(whois_result)
             privacy_term_match = name_privacy_match(terms, name)
             if privacy_term_match is not None:
                 log.debug("# Hostname %s was marked as a privacy flag. Term Match: %s.",
-                          hostname, privacy_term_match)
-                DB.record_flagged(hostname, privacy_term_match)
+                          domain, privacy_term_match)
+                DB.record_flagged(domain, privacy_term_match)
             else:
                 log.debug("# Hostname %s was recorded for country %s.",
-                          hostname, country)
-                DB.record_country(hostname, country)
+                          domain, country)
+                DB.record_country(domain, country)
             index += 1
         except WhoisScannerException as whoisexception:
             log.debug("# Hostname %s was marked failed. %s",
