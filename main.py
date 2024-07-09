@@ -65,8 +65,10 @@ def parse_input(json_data: Any) -> None:
 
 
 # Adding throttling
-# This is actually very basic. The whois library sends queries to the appropriate NIC servers, so we're overly-throttling here.
-# More logic could be added to ask the whois library WHICH server the domain's request would be sent to, and then throttle per-server.
+# This is actually very basic.
+# The whois library sends queries to the appropriate NIC servers, so we're overly-throttling here.
+# More logic could be added to ask the whois library:
+#   WHICH server the domain's request would be sent to, and then throttle per-server.
 # This would likely be done by creating a NICClient, then using client.choose_server
 @sleep_and_retry
 @limits(calls=RATELIMIT_REQUESTS, period=RATELIMIT_TIMERANGE)
