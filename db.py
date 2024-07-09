@@ -58,11 +58,10 @@ class Db:
 
     def output_results(self, output_loc: TextIOWrapper = None, fmt: Format = Format.JSON):
         '''Outputs the results stored in the DB'''
-        match fmt:
-            case Db.Format.JSON:
-                self._output_results_json(output_loc)
-            case Db.Format.CSV:
-                self._output_results_csv(output_loc)
+        if fmt == Db.Format.JSON:
+            self._output_results_json(output_loc)
+        elif fmt == Db.Format.CSV:
+            self._output_results_csv(output_loc)
 
     def _output_results_json(self, output_loc: TextIOWrapper = None):
         '''Outputs the results stored in the DB to a JSON file'''
