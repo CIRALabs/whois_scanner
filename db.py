@@ -1,12 +1,20 @@
 '''Data storage and retrieval interface'''
+from enum import Enum
+from io import TextIOWrapper
 import json
 
 SUCCESS_KEY = "succeed_domains"
 PRIVACY_KEY = "private_domains"
-FAILED_KEY  = "failed_domains"
+FAILED_KEY = "failed_domains"
+
 
 class Db:
     '''Provides an interface to store/retrieve results'''
+
+    class Format(Enum):
+        '''Output formats'''
+        JSON =  1,
+        CSV = 2
 
     DB = {}
 
@@ -46,7 +54,22 @@ class Db:
     def __str__(self):
         return str(self.DB)
 
-    # Feature Request: Multiple output locations
-    def output_results(self):
+    def output_results(self, output_loc: TextIOWrapper = None, fmt: Format = Format.JSON):
         '''Outputs the results stored in the DB'''
-        print(json.dumps(self.DB, indent=4))
+        match fmt:
+            case Db.Format.JSON:
+                self._output_results_json(output_loc)
+            case Db.Format.CSV:
+                self._output_results_csv(output_loc)
+
+    def _output_results_json(self, output_loc: TextIOWrapper = None):
+        '''Outputs the results stored in the DB to a JSON file'''
+        results = json.dumps(self.DB, indent=4)
+        if output_loc is None:
+            print(results)
+        else:
+            output_loc.write(results)
+
+    def _output_results_csv(self, output_loc: TextIOWrapper = None):
+        '''Outputs the results stored in the DB to a CSV file'''
+        pass

@@ -20,6 +20,7 @@ RATELIMIT_TIMERANGE = 20  # Amount of time to rate limit
 SCHEMA_FILE = "rules.schema.json"
 RULES_FILE = "rules.json"
 DOMAINS_FILE = "input.csv"
+OUTPUT_FILE = "output.json"
 ENCODING = "UTF-8"
 DB = Db()
 
@@ -173,7 +174,8 @@ def main(pagenum: int, pagesize: int) -> int:
             log.exception(ex)
             return -100  # stop processing immediately
 
-    DB.output_results()
+    with open(OUTPUT_FILE, "w", encoding=ENCODING) as output:
+        DB.output_results(output)
     return DB.get_failed_domain_count()
 
 

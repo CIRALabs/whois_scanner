@@ -162,3 +162,5 @@ cython_debug/
 #.idea/
 
 input.csv
+output.csv
+output.json
