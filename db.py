@@ -71,20 +71,20 @@ class Db:
 
     def _output_results_csv(self, output_loc: TextIOWrapper = None):
         '''Outputs the results stored in the DB to a CSV file'''
-        fieldnames = ["domain", "country"]
+        fieldnames = ["domain", "private", "country"]
         data = []
         if SUCCESS_KEY in self.DB:
             for country in self.DB[SUCCESS_KEY]:
                 for domain in self.DB[SUCCESS_KEY][country]:
                     data.append(
-                        {"country": "N/A" if country is None else country, "domain": domain})
+                        {"domain": domain, "private": False, "country": "N/A" if country is None else country})
         if PRIVACY_KEY in self.DB:
             for domain in self.DB[PRIVACY_KEY]:
                 data.append(
-                    {"country": "Privacy Protected", "domain": domain})
+                    {"domain": domain, "private": True, "country": "Privacy Protected"})
         if FAILED_KEY in self.DB:
             for domain in self.DB[FAILED_KEY]:
-                data.append({"country": "Failed", "domain": domain})
+                data.append({"domain": domain, "private": False, "country": "Failed"})
         writer = csv.DictWriter(output_loc, fieldnames=fieldnames)
         if output_loc is None:
             output_loc = sys.stdout
