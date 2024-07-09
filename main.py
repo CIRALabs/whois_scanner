@@ -15,12 +15,13 @@ from error import WhoisScannerException, ErrorCodes
 from db import Db
 
 # Basic rate limiting: 5 requests per 20 seconds
-RATELIMIT_REQUESTS = 5    # Number of requests to rate limit
-RATELIMIT_TIMERANGE = 20  # Amount of time to rate limit
+RATELIMIT_REQUESTS = 50    # Number of requests to rate limit
+RATELIMIT_TIMERANGE = 60   # Amount of time to rate limit
 SCHEMA_FILE = "rules.schema.json"
 RULES_FILE = "rules.json"
 DOMAINS_FILE = "input.csv"
-OUTPUT_FILE = "output.json"
+OUTPUT_FORMAT = Db.Format.CSV
+OUTPUT_FILE = "output.csv"
 ENCODING = "UTF-8"
 DB = Db()
 
@@ -175,7 +176,7 @@ def main(pagenum: int, pagesize: int) -> int:
             return -100  # stop processing immediately
 
     with open(OUTPUT_FILE, "w", encoding=ENCODING) as output:
-        DB.output_results(output)
+        DB.output_results(output, OUTPUT_FORMAT)
     return DB.get_failed_domain_count()
 
 

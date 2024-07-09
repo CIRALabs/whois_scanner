@@ -1,7 +1,9 @@
 '''Data storage and retrieval interface'''
+import csv
 from enum import Enum
 from io import TextIOWrapper
 import json
+import sys
 
 SUCCESS_KEY = "succeed_domains"
 PRIVACY_KEY = "private_domains"
@@ -72,4 +74,21 @@ class Db:
 
     def _output_results_csv(self, output_loc: TextIOWrapper = None):
         '''Outputs the results stored in the DB to a CSV file'''
-        pass
+        fieldnames = ["domain", "country"]
+        data = []
+        if SUCCESS_KEY in self.DB:
+            for country in self.DB[SUCCESS_KEY]:
+                for domain in self.DB[SUCCESS_KEY][country]:
+                    data.append({"country": "N/A" if country is None else country, "domain": domain})
+        if PRIVACY_KEY in self.DB:
+            for term in self.DB[PRIVACY_KEY]:
+                for domain in self.DB[PRIVACY_KEY][term]:
+                    data.append({"country": f"Privacy Protected ({term})", "domain": domain})
+        if FAILED_KEY in self.DB:
+            for domain in self.DB[FAILED_KEY]:
+                data.append({"country": "Failed", "domain": domain})
+        writer = csv.DictWriter(output_loc, fieldnames=fieldnames)
+        if output_loc is None:
+            output_loc = sys.stdout
+        writer.writeheader()
+        writer.writerows(data)
