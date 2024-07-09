@@ -21,6 +21,12 @@ The data should conform to the [JSON schema](./rules.schema.json):
 ### Command-line parameters
 Script accepts two arguments: `pagenum` (starts at 0) and `pagesize`. If these are not provided, then the whole list inside the CSV will be processed.
 
+### Rate Limiting
+The library has some hard-coded rate limits for now. You can change the rate limits by changing the values in the main.py file.
+Specifically the global variables at the top of the file `RATELIMIT_REQUESTS` and `RATELIMIT_TIMERANGE`.
+These values define how many requests may be made within a specific time range (for example, 5 requests every 20 seconds).
+As of right now, there's no way to adjust these dynamically per invocation of the program based on command line parameters - it must be done with hard-coded values.
+
 ## Localhost
 Before you can run the program, you should create a virtual environment for the python executable
 ```bash
