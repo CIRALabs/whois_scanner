@@ -27,13 +27,15 @@ class Db:
             self.DB[SUCCESS_KEY] = {}
         if country not in self.DB[SUCCESS_KEY]:
             self.DB[SUCCESS_KEY][country] = []
-        self.DB[SUCCESS_KEY][country].append({"domain": domain, "nameservers": nameservers})
+        self.DB[SUCCESS_KEY][country].append(
+            {"domain": domain, "nameservers": nameservers})
 
     def record_flagged(self, domain: str, nameservers: List[str] = None):
         '''Record a privacy flagged domain'''
         if PRIVACY_KEY not in self.DB:
             self.DB[PRIVACY_KEY] = []
-        self.DB[PRIVACY_KEY].append({"domain": domain, "nameservers": nameservers})
+        self.DB[PRIVACY_KEY].append(
+            {"domain": domain, "nameservers": nameservers})
 
     def record_failed(self, domain, reason, nameservers: List[str] = None):
         '''Record a failed domain lookup'''
@@ -41,7 +43,8 @@ class Db:
             self.DB[FAILED_KEY] = {}
         if reason not in self.DB[FAILED_KEY]:
             self.DB[FAILED_KEY][reason] = []
-        self.DB[FAILED_KEY][reason].append({"domain": domain, "nameservers": nameservers})
+        self.DB[FAILED_KEY][reason].append(
+            {"domain": domain, "nameservers": nameservers})
 
     def get_failed_domain_count(self):
         '''Return the number of failed domains recorded'''
@@ -95,14 +98,14 @@ class Db:
                              "private": True,
                              "country": "Privacy Protected",
                              "nameservers": nameservers_to_str(domain)
-                            })
+                             })
         if FAILED_KEY in self.DB:
             for domain in self.DB[FAILED_KEY]:
                 data.append({"domain": domain["domain"],
                              "private": False,
                              "country": "Failed",
                              "nameservers": nameservers_to_str(domain)
-                            })
+                             })
         writer = csv.DictWriter(output_loc, fieldnames=fieldnames)
         if output_loc is None:
             output_loc = sys.stdout
