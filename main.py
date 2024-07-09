@@ -8,12 +8,15 @@ import sys
 from typing import Any, List, Tuple
 
 import jsonschema
-from pyrate_limiter import BucketFullException, Duration, Limiter, Rate
+from ratelimit import sleep_and_retry, limits
 import whois
 
 from error import WhoisScannerException, ErrorCodes
 from db import Db
 
+# Basic rate limiting: 5 requests per 20 seconds
+RATELIMIT_REQUESTS=5    # Number of requests to rate limit
+RATELIMIT_TIMERANGE=20  # Amount of time to rate limit
 SCHEMA_FILE = "rules.schema.json"
 RULES_FILE = "rules.json"
 DOMAINS_FILE = "input.csv"
@@ -65,10 +68,11 @@ def parse_input(json_data: Any) -> None:
 # This is actually very basic. The whois library sends queries to the appropriate NIC servers, so we're overly-throttling here.
 # More logic could be added to ask the whois library WHICH server the domain's request would be sent to, and then throttle per-server.
 # This would likely be done by creating a NICClient, then using client.choose_server
-def lookup(domain: str, limiter: Limiter) -> Any:
+@sleep_and_retry
+@limits(calls=RATELIMIT_REQUESTS, period=RATELIMIT_TIMERANGE)
+def lookup(domain: str) -> Any:
     '''Perform the whois lookup'''
     try:
-        limiter.try_acquire(domain)
         resp = whois.whois(domain)
         return resp
     except whois.parser.PywhoisError as ex:
@@ -76,8 +80,6 @@ def lookup(domain: str, limiter: Limiter) -> Any:
             raise WhoisScannerException(
                 ErrorCodes.HOSTNAME_DOES_NOT_EXIST) from ex
         raise ex
-    except BucketFullException as err:
-        raise err #TODO: Handle better?
 
 
 def extract_registrant_data(whois_result: Any) -> Tuple[str, str]:
@@ -137,10 +139,6 @@ def main(pagenum: int, pagesize: int) -> int:
         log.exception(ex)
         return -1
 
-    # TODO: Hard-coded limiter
-    rate = Rate(5, Duration.SECOND * 10)
-    limiter = Limiter(rate, max_delay=5000)
-
     index = 0
     log.info("Begin whois lookup for %d hostnames", len(domains))
     for domain in domains:
@@ -149,7 +147,7 @@ def main(pagenum: int, pagesize: int) -> int:
                 "Processing host [%d of %d] (will output every 10)", index, len(domains))
         try:
             log.debug("Looking up hostname %s", domain)
-            whois_result = lookup(domain, limiter)
+            whois_result = lookup(domain)
             (name, country) = extract_registrant_data(whois_result)
             privacy_term_match = name_privacy_match(terms, name)
             if privacy_term_match is not None:
