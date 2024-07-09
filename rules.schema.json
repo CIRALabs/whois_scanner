@@ -20,23 +20,6 @@
           }
         }
       }
-    },
-    "domains": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "hostname": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "hostname"
-        ]
-      }
     }
-  },
-  "required": [
-    "domains"
-  ]
+  }
 }
