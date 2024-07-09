@@ -30,7 +30,8 @@ def read_input() -> Any:
             json_data = json.load(json_file)
             return json_data
     except IOError as ex:
-        raise WhoisScannerException(ErrorCodes.FAILED_TO_READ_INPUT_FILE) from ex
+        raise WhoisScannerException(
+            ErrorCodes.FAILED_TO_READ_INPUT_FILE) from ex
 
 
 def parse_input(json_data: Any) -> Any:
@@ -38,7 +39,8 @@ def parse_input(json_data: Any) -> Any:
     try:
         with open(SCHEMA_FILE, encoding=ENCODING) as schema_file:
             schema = json.load(schema_file)
-            jsonschema.validate(instance=json_data, schema=schema) # Will raise exception if invalid
+            # Will raise exception if invalid
+            jsonschema.validate(instance=json_data, schema=schema)
             return json_data
     except jsonschema.exceptions.ValidationError as ex:
         raise WhoisScannerException(ErrorCodes.BAD_INPUT_FILE) from ex
@@ -51,7 +53,8 @@ def lookup(domain: str) -> Any:
         return resp
     except whois.parser.PywhoisError as ex:
         if str(ex).startswith("No match for"):
-            raise WhoisScannerException(ErrorCodes.HOSTNAME_DOES_NOT_EXIST) from ex
+            raise WhoisScannerException(
+                ErrorCodes.HOSTNAME_DOES_NOT_EXIST) from ex
         raise ex
 
 
@@ -102,6 +105,7 @@ def name_privacy_match(terms: List[Any], name: str) -> str:
                 return f"prefix:{term}"
     return None
 
+
 def main(pagenum: int, pagesize: int) -> int:
     '''Main function. Runs the full process.'''
     try:
@@ -121,7 +125,8 @@ def main(pagenum: int, pagesize: int) -> int:
     log.info("Begin whois lookup for %d hostnames", len(domains))
     for domain in domains:
         if index % 10 == 0:
-            log.info("Processing host [%d of %d] (will output every 10)", index, len(domains))
+            log.info(
+                "Processing host [%d of %d] (will output every 10)", index, len(domains))
         try:
             hostname = extract_hostname(domain)
             log.debug("Looking up hostname %s", hostname)
@@ -133,11 +138,13 @@ def main(pagenum: int, pagesize: int) -> int:
                           hostname, privacy_term_match)
                 DB.record_flagged(hostname, privacy_term_match)
             else:
-                log.debug("# Hostname %s was recorded for country %s.", hostname, country)
+                log.debug("# Hostname %s was recorded for country %s.",
+                          hostname, country)
                 DB.record_country(hostname, country)
             index += 1
         except WhoisScannerException as whoisexception:
-            log.debug("# Hostname %s was marked failed. %s", domain, str(whoisexception))
+            log.debug("# Hostname %s was marked failed. %s",
+                      domain, str(whoisexception))
             DB.record_failed(domain, str(whoisexception))
         except whois.parser.PywhoisError as ex:
             log.debug("# Hostname %s was marked failed. %s", domain, str(ex))
