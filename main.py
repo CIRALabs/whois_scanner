@@ -86,17 +86,12 @@ def lookup(domain: str) -> Any:
         raise ex
 
 
-def extract_registrant_data(whois_result: Any) -> Tuple[str, str]:
+def extract_registrant_country(whois_result: Any) -> str:
     '''Pull rant info out of the whois result'''
-    name = None
     country = None
-    if "name" in whois_result:
-        name = whois_result["name"]
-    if name is None and "org" in whois_result:
-        name = whois_result["org"]
     if "country" in whois_result:
         country = whois_result["country"]
-    return (name, country)
+    return country
 
 
 def extract_domains(input_data: Any, pagenum: int, pagesize: int) -> List[str]:
@@ -117,8 +112,13 @@ def extract_terms(input_data: Any) -> List[Any]:
     return []
 
 
-def name_privacy_match(terms: List[Any], name: str) -> str:
-    '''Determines if this is a value indicating a 'private' registration'''
+def name_privacy_match(terms: List[Any], whois_result: Any) -> str:
+    '''Checks name or org fields for privacy indicator'''
+    name = None
+    if "name" in whois_result:
+        name = whois_result["name"]
+    if name is None and "org" in whois_result:
+        name = whois_result["org"]
     log.debug("Checking %s for privacy flag", name)
     if name is None:
         return None
@@ -129,6 +129,14 @@ def name_privacy_match(terms: List[Any], name: str) -> str:
         for term in terms["prefix"]:
             if name.startswith(term):
                 return f"prefix:{term}"
+    return None
+
+
+def privacy_match(terms: List[Any], whois_result: Any) -> str:
+    '''Determines if this is a value indicating a 'private' registration'''
+    name_match = name_privacy_match(terms, whois_result)
+    if name_match is not None:
+        return name_match
     return None
 
 
@@ -153,8 +161,8 @@ def main(pagenum: int, pagesize: int) -> int:
         try:
             log.debug("Looking up hostname %s", domain)
             whois_result = lookup(domain)
-            (name, country) = extract_registrant_data(whois_result)
-            privacy_term_match = name_privacy_match(terms, name)
+            country = extract_registrant_country(whois_result)
+            privacy_term_match = privacy_match(terms, whois_result)
             if privacy_term_match is not None:
                 log.debug("# Hostname %s was marked as a privacy flag. Term Match: %s.",
                           domain, privacy_term_match)
