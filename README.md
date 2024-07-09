@@ -10,10 +10,16 @@ We would like to isolate gTLD domains by country so we can run them through our 
 
 # How to run
 ## Data definition
+### CSV data file
 First you need to provide an input for the data to be processed.
-The data should conform to the [JSON schema](./input.schema.json):
+The script expects a CSV file with a column for `"input_url"`. This means that the file must have a header row defining column names. Any additional columns are ignored.
 
-Script accepts two arguments: `pagenum` (starts at 0) and `pagesize`. If these are not provided, then the whole list will be processed.
+### Rules file
+In addition, the system allows for a JSON file defining rules that will be used to identify private domains.
+The data should conform to the [JSON schema](./rules.schema.json):
+
+### Command-line parameters
+Script accepts two arguments: `pagenum` (starts at 0) and `pagesize`. If these are not provided, then the whole list inside the CSV will be processed.
 
 ## Localhost
 Before you can run the program, you should create a virtual environment for the python executable

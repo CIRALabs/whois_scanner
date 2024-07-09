@@ -122,8 +122,6 @@ def main(pagenum: int, pagesize: int) -> int:
     try:
         log.info("Processing input data")
         terms, domains = read_input(pagenum, pagesize)
-        print(domains)
-        print(terms)
     except WhoisScannerException as whoisexception:
         log.exception(whoisexception)
         return whoisexception.code
