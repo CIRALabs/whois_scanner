@@ -32,6 +32,8 @@ def read_input(pagenum: int, pagesize: int) -> Tuple[Any, List[str]]:
             rules_data = json.load(rules_file)
             parse_input(rules_data)
             terms = extract_terms(rules_data)
+    except FileNotFoundError:
+        terms = {}
     except IOError as ex:
         raise WhoisScannerException(
             ErrorCodes.FAILED_TO_READ_INPUT_FILE) from ex
