@@ -70,6 +70,13 @@ def extract_registrant_country(whois_result: Any) -> str:
     return country
 
 
+def extract_nameservers(whois_result: Any) -> List[str]:
+    '''Pull nameservers info out of the whois result'''
+    if "name_servers" in whois_result:
+        return whois_result["name_servers"]
+    return None
+
+
 def extract_domains(input_data: Any, pagenum: int, pagesize: int) -> List[str]:
     '''Pull domain list out of the input file data'''
     if pagesize is None:
@@ -79,13 +86,6 @@ def extract_domains(input_data: Any, pagenum: int, pagesize: int) -> List[str]:
     specific_rows = [row for idx, row in enumerate(
         input_data) if idx in range(start, stop)]
     return [row["input_url"] for row in specific_rows]
-
-
-def extract_terms(input_data: Any) -> List[Any]:
-    '''Pull terms list out of the input file data'''
-    if "terms" in input_data:
-        return input_data["terms"]
-    return []
 
 
 def privacy_match(whois_result: str) -> bool:
@@ -109,6 +109,7 @@ def main(pagenum: int, pagesize: int) -> int:
         return -1
 
     index = 0
+    nameserver_list = None
     log.info("Begin whois lookup for %d hostnames", len(domains))
     for domain in domains:
         if index % 10 == 0:
@@ -118,22 +119,23 @@ def main(pagenum: int, pagesize: int) -> int:
             log.debug("Looking up hostname %s", domain)
             whois_result = lookup(domain)
             country = extract_registrant_country(whois_result)
+            nameserver_list = extract_nameservers(whois_result)
             privacy_term_match = privacy_match(whois_result)
             if privacy_term_match:
                 log.debug("# Hostname %s was marked as a privacy flag.", domain)
-                DB.record_flagged(domain=domain)
+                DB.record_flagged(domain, nameserver_list)
             else:
                 log.debug("# Hostname %s was recorded for country %s.",
                           domain, country)
-                DB.record_country(domain, country)
+                DB.record_country(domain, country, nameserver_list)
             index += 1
         except WhoisScannerException as whoisexception:
             log.debug("# Hostname %s was marked failed. %s",
                       domain, str(whoisexception))
-            DB.record_failed(domain, str(whoisexception))
+            DB.record_failed(domain, str(whoisexception), nameserver_list)
         except whois.parser.PywhoisError as ex:
             log.debug("# Hostname %s was marked failed. %s", domain, str(ex))
-            DB.record_failed(domain, str(ex))
+            DB.record_failed(domain, str(ex), nameserver_list)
         except Exception as ex:  # pylint: disable=broad-except
             log.exception(ex)
             return -100  # stop processing immediately

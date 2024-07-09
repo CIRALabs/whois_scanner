@@ -4,6 +4,7 @@ from enum import Enum
 from io import TextIOWrapper
 import json
 import sys
+from typing import List
 
 SUCCESS_KEY = "succeed_domains"
 PRIVACY_KEY = "private_domains"
@@ -20,7 +21,7 @@ class Db:
 
     DB = {}
 
-    def record_country(self, domain, country):
+    def record_country(self, domain, country, nameservers: List[str] = None):
         '''Record a result'''
         if SUCCESS_KEY not in self.DB:
             self.DB[SUCCESS_KEY] = {}
@@ -28,13 +29,13 @@ class Db:
             self.DB[SUCCESS_KEY][country] = []
         self.DB[SUCCESS_KEY][country].append(domain)
 
-    def record_flagged(self, domain: str):
+    def record_flagged(self, domain: str, nameservers: List[str] = None):
         '''Record a privacy flagged domain'''
         if PRIVACY_KEY not in self.DB:
             self.DB[PRIVACY_KEY] = []
         self.DB[PRIVACY_KEY].append(domain)
 
-    def record_failed(self, domain, reason):
+    def record_failed(self, domain, reason, nameservers: List[str] = None):
         '''Record a failed domain lookup'''
         if FAILED_KEY not in self.DB:
             self.DB[FAILED_KEY] = {}
