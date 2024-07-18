@@ -164,3 +164,4 @@ cython_debug/
 input.csv
 output.csv
 output.json
+whoisit.bootstrap.json

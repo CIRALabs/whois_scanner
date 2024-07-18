@@ -1,6 +1,7 @@
 '''Main executable file'''
 
 import csv
+import json
 import logging
 import os
 import re
@@ -9,6 +10,7 @@ from typing import Any, List
 
 from ratelimit import sleep_and_retry, limits
 import whois
+import whoisit
 
 from error import WhoisScannerException, ErrorCodes
 from db import Db
@@ -16,6 +18,7 @@ from db import Db
 # Basic rate limiting: 5 requests per 20 seconds
 RATELIMIT_REQUESTS = 50    # Number of requests to rate limit
 RATELIMIT_TIMERANGE = 60   # Amount of time to rate limit
+WHOISIT_BOOTSTRAP_FILE = "whoisit.bootstrap.json"
 DOMAINS_FILE = "input.csv"
 OUTPUT_FORMAT = Db.Format.CSV
 OUTPUT_FILE = "output.csv"
@@ -62,6 +65,36 @@ def lookup(domain: str) -> Any:
         raise ex
 
 
+def bootstrap_whoisit_library() -> None:
+    '''If the library is not yet bootstrapped, attempt to load from bootstrap file.
+    Otherwise do HTTP lookups'''
+    if not whoisit.is_bootstrapped():
+        if os.path.isfile(WHOISIT_BOOTSTRAP_FILE):
+            with open(WHOISIT_BOOTSTRAP_FILE, "r", encoding=ENCODING) as f:
+                bootstrap_info = json.load(f)
+            whoisit.load_bootstrap_data(WHOISIT_BOOTSTRAP_FILE)
+    if not whoisit.is_bootstrapped() or whoisit.bootstrap_is_older_than(days=3):
+        whoisit.clear_bootstrapping()
+        whoisit.bootstrap()
+        bootstrap_info = whoisit.save_bootstrap_data()
+        with open(WHOISIT_BOOTSTRAP_FILE, "w", encoding=ENCODING) as f:
+            f.write(json.dumps(bootstrap_info))
+
+
+# Adding throttling
+# This is actually very basic.
+# The whois library sends queries to the appropriate NIC servers, so we're overly-throttling here.
+# More logic could be added to ask the whois library:
+#   WHICH server the domain's request would be sent to, and then throttle per-server.
+# This would likely be done by creating a NICClient, then using client.choose_server
+@sleep_and_retry
+@limits(calls=RATELIMIT_REQUESTS, period=RATELIMIT_TIMERANGE)
+def lookup_rdap(domain: str) -> Any:
+    '''Perform the whois lookup'''
+    bootstrap_whoisit_library()
+    resp = whoisit.domain(domain)
+    return resp
+
 def extract_registrant_country(whois_result: Any) -> str:
     '''Pull rant info out of the whois result'''
     country = None
@@ -96,7 +129,7 @@ def privacy_match(whois_result: str) -> bool:
     return False
 
 
-def main(pagenum: int, pagesize: int) -> int:
+def main(pagenum: int, pagesize: int, use_whois: bool = True) -> int:
     '''Main function. Runs the full process.'''
     try:
         log.info("Processing input data")
@@ -117,17 +150,21 @@ def main(pagenum: int, pagesize: int) -> int:
                 "Processing host [%d of %d] (will output every 10)", index, len(domains))
         try:
             log.debug("Looking up hostname %s", domain)
-            whois_result = lookup(domain)
-            country = extract_registrant_country(whois_result)
-            nameserver_list = extract_nameservers(whois_result)
-            privacy_term_match = privacy_match(whois_result)
-            if privacy_term_match:
-                log.debug("# Hostname %s was marked as a privacy flag.", domain)
-                DB.record_flagged(domain, nameserver_list)
+            if use_whois:
+                whois_result = lookup(domain)
+                country = extract_registrant_country(whois_result)
+                nameserver_list = extract_nameservers(whois_result)
+                privacy_term_match = privacy_match(whois_result)
+                if privacy_term_match:
+                    log.debug("# Hostname %s was marked as a privacy flag.", domain)
+                    DB.record_flagged(domain, nameserver_list)
+                else:
+                    log.debug("# Hostname %s was recorded for country %s.",
+                            domain, country)
+                    DB.record_country(domain, country, nameserver_list)
             else:
-                log.debug("# Hostname %s was recorded for country %s.",
-                          domain, country)
-                DB.record_country(domain, country, nameserver_list)
+                rdap_result = lookup_rdap(domain)
+                print(rdap_result)
             index += 1
         except WhoisScannerException as whoisexception:
             log.debug("# Hostname %s was marked failed. %s",
@@ -152,4 +189,4 @@ if __name__ == "__main__":
         PAGE_NUM = int(sys.argv[1])
         PAGE_SIZE = int(sys.argv[2])
 
-    sys.exit(main(PAGE_NUM, PAGE_SIZE))
+    sys.exit(main(PAGE_NUM, PAGE_SIZE, False))
