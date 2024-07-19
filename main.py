@@ -1,7 +1,6 @@
 '''Main executable file'''
 
 import csv
-import json
 import logging
 import os
 import re
@@ -71,14 +70,14 @@ def bootstrap_whoisit_library() -> None:
     if not whoisit.is_bootstrapped():
         if os.path.isfile(WHOISIT_BOOTSTRAP_FILE):
             with open(WHOISIT_BOOTSTRAP_FILE, "r", encoding=ENCODING) as f:
-                bootstrap_info = json.load(f)
-            whoisit.load_bootstrap_data(WHOISIT_BOOTSTRAP_FILE)
+                boostrap_info = f.read()
+            whoisit.load_bootstrap_data(boostrap_info)
     if not whoisit.is_bootstrapped() or whoisit.bootstrap_is_older_than(days=3):
         whoisit.clear_bootstrapping()
         whoisit.bootstrap()
         bootstrap_info = whoisit.save_bootstrap_data()
         with open(WHOISIT_BOOTSTRAP_FILE, "w", encoding=ENCODING) as f:
-            f.write(json.dumps(bootstrap_info))
+            f.write(bootstrap_info)
 
 
 # Adding throttling
