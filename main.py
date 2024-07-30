@@ -17,7 +17,7 @@ from db import Db
 RATELIMIT_REQUESTS = 50    # Number of requests to rate limit
 RATELIMIT_TIMERANGE = 60   # Amount of time to rate limit
 DOMAINS_FILE = "input.csv"
-OUTPUT_FORMAT = Db.Format.CSV
+OUTPUT_FORMAT = Db.Format.CSV_WHOLE_RESULT
 OUTPUT_FILE = "output.csv"
 ENCODING = "UTF-8"
 DB = Db()
@@ -53,28 +53,13 @@ def read_input(pagenum: int, pagesize: int) -> List[str]:
 def lookup(domain: str) -> Any:
     '''Perform the whois lookup'''
     try:
-        resp = whois.whois(domain)
+        resp = whois.whois(domain, inc_raw=True)
         return resp
     except whois.parser.PywhoisError as ex:
         if str(ex).startswith("No match for"):
             raise WhoisScannerException(
                 ErrorCodes.HOSTNAME_DOES_NOT_EXIST) from ex
         raise ex
-
-
-def extract_registrant_country(whois_result: Any) -> str:
-    '''Pull rant info out of the whois result'''
-    country = None
-    if "country" in whois_result:
-        country = whois_result["country"]
-    return country
-
-
-def extract_nameservers(whois_result: Any) -> List[str]:
-    '''Pull nameservers info out of the whois result'''
-    if "name_servers" in whois_result:
-        return whois_result["name_servers"]
-    return None
 
 
 def extract_domains(input_data: Any, pagenum: int, pagesize: int) -> List[str]:
@@ -118,16 +103,7 @@ def main(pagenum: int, pagesize: int) -> int:
         try:
             log.debug("Looking up hostname %s", domain)
             whois_result = lookup(domain)
-            country = extract_registrant_country(whois_result)
-            nameserver_list = extract_nameservers(whois_result)
-            privacy_term_match = privacy_match(whois_result)
-            if privacy_term_match:
-                log.debug("# Hostname %s was marked as a privacy flag.", domain)
-                DB.record_flagged(domain, nameserver_list)
-            else:
-                log.debug("# Hostname %s was recorded for country %s.",
-                          domain, country)
-                DB.record_country(domain, country, nameserver_list)
+            DB.record_result(whois_result)
             index += 1
         except WhoisScannerException as whoisexception:
             log.debug("# Hostname %s was marked failed. %s",
