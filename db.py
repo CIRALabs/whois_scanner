@@ -78,6 +78,7 @@ class Db:
 
         if RESULTS_KEY not in self.DB:
             self.DB[RESULTS_KEY] = []
+        # pylint: disable=locally-disabled, multiple-statements, fixme, line-too-long
         self.DB[RESULTS_KEY].append(
             {
                 'domain': domain_to_str(whois_response['domain_name']) if 'domain_name' in whois_response else None,
